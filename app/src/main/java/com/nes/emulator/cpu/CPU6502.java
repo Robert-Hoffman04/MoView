@@ -414,32 +414,32 @@ public class CPU6502 {
             // ── LAS/LAE = (mem & SP) → A, X, SP (with dummy read) ─────────
             case 0xBB:
                 addr = read16(PC); PC += 2;
-                val = bus.cpuRead(readUnstableAbsIndexed(addr, Y, SP)) & SP;
+                val = bus.cpuRead(readAbsIndexed(addr, Y)) & SP;
                 A = val; X = val; SP = val; setZN(val); break;
 
             // ── TAS/SHS = SP = A & X, store SP & (addr_hi+1) ──────────────
             case 0x9B:
                 addr = read16(PC); PC += 2;
                 SP = A & X;
-                writeUnstableAbsIndexed(addr, Y, SP, SP); break;
+                writeUnstableAbsIndexed(addr, Y, SP, X, false); break;
 
             // ── SHA/AHX = store A & X & (addr_hi+1) abs,Y / (ind),Y ───────
             case 0x9F:
                 addr = read16(PC); PC += 2;
-                writeUnstableAbsIndexed(addr, Y, A & X, A & X); break;
+                writeUnstableAbsIndexed(addr, Y, A & X, X, false); break;
             case 0x93:
                 tmp = bus.cpuRead(PC++) & 0xFF;
-                writeUnstableIndY(tmp, A & X, A & X); break;
+                writeUnstableIndY(tmp, A & X, X); break;
 
             // ── SHX = store X & (addr_hi+1) abs,Y ─────────────────────────
             case 0x9E:
                 addr = read16(PC); PC += 2;
-                writeUnstableAbsIndexed(addr, Y, X, X); break;
+                writeUnstableAbsIndexed(addr, Y, X, X, true); break;
 
             // ── SHY = store Y & (addr_hi+1) abs,X ─────────────────────────
             case 0x9C:
                 addr = read16(PC); PC += 2;
-                writeUnstableAbsIndexed(addr, X, Y, Y); break;
+                writeUnstableAbsIndexed(addr, X, Y, Y, true); break;
 
             default: break; // remaining undocumented opcodes treated as NOP
         }
@@ -525,16 +525,17 @@ public class CPU6502 {
 
 
     /**
-     * Unstable SHx/TAS absolute-indexed stores corrupt H on normal page-crossing
-     * writes. If RDY/DMC halts on the dummy-read cycle before the write, hardware
-     * falls back to standard-store behavior: the normal effective address is used
-     * and the value is not ANDed with H.
+     * Unstable SHx/TAS stores use hardware behavior 2 observed by AccuracyCoin:
+     * the target page is ANDed with X/Y on page crossing, and the stored value is
+     * normally ANDed with H. For SHX/SHY, a DMC/RDY halt on the dummy read makes
+     * the opcode behave like STX/STY. SHA/SHS keep their H mask in this emulator
+     * because DMC fetch timing is coarse-grained per instruction.
      */
-    private void writeUnstableAbsIndexed(int baseAddr, int index, int val, int highMask) {
+    private void writeUnstableAbsIndexed(int baseAddr, int index, int val, int highMask, boolean rdyCanCancelH) {
         int effective = (baseAddr + index) & 0xFFFF;
         int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
         bus.cpuRead(dummyAddr);
-        boolean rdyHalted = bus.consumeDmcDmaReadSinceCpu();
+        boolean rdyHalted = rdyCanCancelH && bus.consumeDmcDmaReadSinceCpu();
         int target = (!rdyHalted && pageCross(baseAddr, effective))
                 ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
                 : effective;
@@ -552,22 +553,13 @@ public class CPU6502 {
         int effective = (baseAddr + Y) & 0xFFFF;
         int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + Y) & 0xFF);
         bus.cpuRead(dummyAddr);
-        boolean rdyHalted = bus.consumeDmcDmaReadSinceCpu();
+        boolean rdyHalted = false;
         int target = (!rdyHalted && pageCross(baseAddr, effective))
                 ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
                 : effective;
         bus.cpuWrite(target, unstableStoreValue(baseAddr, val, rdyHalted));
     }
 
-    /** LAS/LAE uses the same unstable high-byte read target on page crossings. */
-    private int readUnstableAbsIndexed(int baseAddr, int index, int highMask) {
-        int effective = (baseAddr + index) & 0xFFFF;
-        if (!pageCross(baseAddr, effective)) return effective;
-        extraCycles++;
-        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
-        bus.cpuRead(dummyAddr);
-        return (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8);
-    }
 
     // ── RMW helpers with dummy write (write original value before modifying) ──
 
