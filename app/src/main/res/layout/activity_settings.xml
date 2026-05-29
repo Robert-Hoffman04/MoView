@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#80000000"
+    tools:context=".SettingsActivity">
+
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:layout_marginHorizontal="200dp"
+        android:layout_marginVertical="50dp"
+        android:backgroundTint="@color/sidePanel"
+        app:cardCornerRadius="50dp" >
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/settingsTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:text="@string/settings"
+                android:textColor="@color/white"
+                android:textSize="60sp" />
+
+            <TextView
+                android:id="@+id/settingsSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/settingsTitle"
+                android:layout_centerHorizontal="true"
+                android:text="@string/do_not_modify"
+                android:textColor="#D5D5D5"
+                android:textSize="20sp" />
+
+            <TextView
+                android:id="@+id/ipLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/settingsSubtitle"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="10dp"
+                android:text="@string/server_ip"
+                android:textColor="@color/white"
+                android:textSize="16sp" />
+
+            <EditText
+                android:id="@+id/ipTextBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/ipLabel"
+                android:background="@color/panelFocus"
+                android:ems="10"
+                android:inputType="text|textEmailAddress"
+                android:textSize="16sp"
+                tools:ignore="Autofill,SpeakableTextPresentCheck,TouchTargetSizeCheck"
+                tools:layout_toEndOf="@id/ipLabel" />
+        </RelativeLayout>
+
+    </androidx.cardview.widget.CardView>
+</RelativeLayout>

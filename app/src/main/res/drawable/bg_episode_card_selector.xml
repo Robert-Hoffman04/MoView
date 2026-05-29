@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- drawable/bg_episode_card_selector.xml
+     Applied as foreground on the CardView via code, or used as a
+     layer-list background for the wrapping FrameLayout in the adapter. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <stroke android:width="2dp" android:color="@color/white" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+
+</selector>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- drawable/bg_season_tab_selector.xml -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Focused (D-pad highlight) -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/panelFocus" />
+            <corners android:radius="8dp" />
+            <stroke android:width="2dp" android:color="@color/white" />
+        </shape>
+    </item>
+
+    <!-- Selected (current active season) — muted blue, not full seekBlue -->
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#2a3a5c" />
+            <corners android:radius="8dp" />
+            <stroke android:width="1dp" android:color="#4a6490" />
+        </shape>
+    </item>
+
+    <!-- Default -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/unfocused" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+</selector>

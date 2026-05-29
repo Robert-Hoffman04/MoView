@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+
+    <!-- Combined from the provided 16x16 SVG into a single path for efficiency -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M5,0h5v1h-5z
+            M4,1h9v1h-9z
+            M4,2h7v1h-7z
+            M3,3h10v1h-10z
+            M3,4h11v1h-11z
+            M3,5h10v1h-10z
+            M5,6h7v1h-7z
+            M4,7h6v1h-6z
+            M3,8h10v1h-10z
+            M2,9h12v1h-12z
+            M2,10h12v1h-12z
+            M2,11h12v1h-12z
+            M2,12h12v1h-12z
+            M4,13h3v1h-3z
+            M9,13h3v1h-3z
+            M3,14h3v1h-3z
+            M10,14h3v1h-3z
+            M2,15h4v1h-4z
+            M10,15h4v1h-4z" />
+</vector>

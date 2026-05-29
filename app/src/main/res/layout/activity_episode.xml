@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#99000000">
+
+    <!-- Central card overlay -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/episodeSelectorCard"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="48dp"
+        android:layout_marginEnd="48dp"
+        app:cardBackgroundColor="@color/standardBackground"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:clipChildren="false"
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp">
+
+            <!-- Season tab strip -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvSeasons"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:descendantFocusability="afterDescendants"
+                android:nextFocusLeft="@+id/rvSeasons"
+                android:nextFocusRight="@+id/rvSeasons"
+                android:nextFocusDown="@+id/rvEpisodes"
+                android:nextFocusUp="@+id/rvSeasons" />
+
+            <!-- Episode card strip -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvEpisodes"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:focusable="true"
+                android:focusableInTouchMode="false"
+                android:descendantFocusability="afterDescendants"
+                android:nextFocusLeft="@+id/rvEpisodes"
+                android:nextFocusRight="@+id/rvEpisodes"
+                android:nextFocusUp="@+id/rvSeasons"
+                android:nextFocusDown="@+id/rvEpisodes" />
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</FrameLayout>

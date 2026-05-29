@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="unfocused">#FF404249</color>
+    <color name="focused">#FF2A2C34</color>
+
+    <color name="standardBackground">#1e2129</color>
+    <color name="sidePanel">#2f3441</color>
+    <color name="panelFocus">#404757</color>
+    <color name="seekBlue">#173c7b</color>
+</resources>

@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/standardBackground"
+    android:orientation="horizontal"
+    tools:context=".MainActivity">
+
+    <RelativeLayout
+        android:id="@+id/home_bar"
+        android:layout_width="50dp"
+        android:layout_height="match_parent"
+        android:background="@color/sidePanel"
+        android:layout_marginEnd="5dp">
+
+        <ImageButton
+            android:id="@+id/buttonSearch"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_alignParentTop="true"
+            android:layout_marginBottom="5dp"
+            android:background="#2f3441"
+            app:srcCompat="@drawable/search"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck"
+            android:onClick="search"/>
+
+        <ImageButton
+            android:id="@+id/buttonHome"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/buttonSearch"
+            android:layout_marginBottom="5dp"
+            android:background="#2f3441"
+            app:srcCompat="@drawable/home"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
+
+        <ImageButton
+            android:id="@+id/buttonCategory"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/buttonHome"
+            android:layout_marginBottom="5dp"
+            android:background="#2f3441"
+            app:srcCompat="@drawable/collections"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck"
+            android:onClick="collections"/>
+
+        <ImageButton
+            android:id="@+id/buttonDownload"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/buttonCategory"
+            android:layout_marginBottom="5dp"
+            android:background="#2f3441"
+            app:srcCompat="@drawable/download_icon"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck"
+            android:onClick="download"/>
+
+        <ImageButton
+            android:id="@+id/buttonMario"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_below="@+id/buttonDownload"
+            android:layout_marginBottom="5dp"
+            android:background="#2f3441"
+            app:srcCompat="@drawable/mario"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck"
+            android:onClick="launchTestRom"/>
+
+        <ImageButton
+            android:id="@+id/buttonSettings"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentBottom="true"
+            android:layout_margin="0dp"
+            android:background="#2f3441"
+            android:onClick="settings"
+            android:padding="5dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/logo"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+    </RelativeLayout>
+
+    <com.example.moview.IncrementalRecyclerView
+        android:id="@+id/home_Section1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@+id/home_bar" />
+
+    <com.example.moview.IncrementalRecyclerView
+        android:id="@+id/home_Section2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/home_Section1"
+        android:layout_toEndOf="@+id/home_bar" >
+
+    </com.example.moview.IncrementalRecyclerView>
+
+    <com.example.moview.IncrementalRecyclerView
+        android:id="@+id/home_Section3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/home_Section2"
+        android:layout_toEndOf="@+id/home_bar" />
+
+    <TextView
+        android:id="@+id/debug"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@id/home_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+</RelativeLayout>

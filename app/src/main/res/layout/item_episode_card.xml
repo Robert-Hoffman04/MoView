@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    item_episode_card.xml
+    Used by EpisodeCardAdapter for the horizontal episode strip.
+    Each card shows: episode thumbnail, episode number, title, and description.
+    Focus highlight is handled by bg_episode_card_selector drawable.
+-->
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/episodeCardRoot"
+    android:layout_width="260dp"
+    android:layout_height="match_parent"
+    android:layout_marginEnd="12dp"
+    android:focusable="true"
+    android:clickable="true"
+    android:focusableInTouchMode="false"
+    app:cardBackgroundColor="@color/sidePanel"
+    app:cardCornerRadius="10dp"
+    app:cardElevation="6dp"
+    android:nextFocusUp="@id/rvSeasons">
+
+    <!--
+        We use a StateListAnimator / outline provider in code to add
+        the focus glow ring, so the CardView itself stays clean.
+    -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- ── Thumbnail / poster ── -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/ivEpisodeThumbnail"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="Episode thumbnail" />
+
+            <!-- Episode number badge (top-left) -->
+            <TextView
+                android:id="@+id/tvEpisodeNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top|start"
+                android:layout_margin="8dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:text="E01"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_episode_number_badge" />
+
+        </FrameLayout>
+
+        <!-- ── Text info block ── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:background="@color/sidePanel">
+
+            <!-- Episode title -->
+            <TextView
+                android:id="@+id/tvEpisodeTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Episode Title"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <!-- Episode description -->
+            <TextView
+                android:id="@+id/tvEpisodeDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Episode description goes here and may wrap across a couple of lines."
+                android:textColor="#AAFFFFFF"
+                android:textSize="11sp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:lineSpacingMultiplier="1.3" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

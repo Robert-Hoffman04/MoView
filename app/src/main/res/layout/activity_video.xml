@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/player_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        tools:ignore="SpeakableTextPresentCheck" >
+
+    </androidx.media3.ui.PlayerView>
+
+    <FrameLayout
+        android:id="@+id/episodeSelectorBackdrop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:paddingHorizontal="40dp"
+        android:background="@drawable/episode_selector_backdrop"
+        android:visibility="invisible">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:src="@drawable/episode_selector_backdrop"
+            tools:ignore="ContentDescription" />
+
+        <Button
+            android:id="@+id/episodeSelector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:backgroundTint="#BBFFFFFF"
+            android:textColor="@color/black"
+            android:onClick="seasonMenu"
+            android:text="@string/show_episodes" />
+
+    </FrameLayout>
+
+    <RelativeLayout
+        android:id="@+id/controls_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="#80000000"
+        android:padding="10dp"
+        android:visibility="invisible">
+
+        <SeekBar
+            android:id="@+id/seek_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:focusable="true"
+            android:background="@drawable/transparent_button_background"
+            android:progressDrawable="@drawable/seek_bar"
+            android:thumbTint="@color/seekBlue" />
+
+        <TextView
+            android:id="@+id/tv_current_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/btn_play_pause"
+            android:layout_alignBottom="@id/btn_play_pause"
+            android:layout_marginStart="10dp"
+            android:gravity="center"
+            android:text="@string/_00_00"
+            android:textColor="#FFFFFF"
+            tools:ignore="RelativeOverlap" />
+
+        <ImageButton
+            android:id="@+id/btn_rewind"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_below="@id/seek_bar"
+            android:layout_toStartOf="@id/btn_play_pause"
+            android:background="@drawable/transparent_button_background"
+            android:focusable="true"
+            android:src="@android:drawable/ic_media_rew"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
+
+        <ImageButton
+            android:id="@+id/btn_play_pause"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_below="@id/seek_bar"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/transparent_button_background"
+            android:focusable="true"
+            android:src="@android:drawable/ic_media_play"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
+
+        <ImageButton
+            android:id="@+id/btn_forward"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_below="@id/seek_bar"
+            android:layout_toEndOf="@id/btn_play_pause"
+            android:background="@drawable/transparent_button_background"
+            android:focusable="true"
+            android:src="@android:drawable/ic_media_ff"
+            tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
+
+        <TextView
+            android:id="@+id/tv_total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@id/btn_play_pause"
+            android:layout_alignBottom="@id/btn_play_pause"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="10dp"
+            android:gravity="center"
+            android:text="@string/_00_00"
+            android:textColor="#FFFFFF" />
+
+    </RelativeLayout>
+
+</RelativeLayout>
