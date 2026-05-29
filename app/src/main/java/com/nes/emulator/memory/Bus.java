@@ -55,9 +55,9 @@ public class Bus {
         } else if (addr == 0x4015) {
             val = apu.readStatus() & 0xFF;
         } else if (addr == 0x4016) {
-            val = controller1.read() & 0xFF;
+            val = (openBus & 0xE0) | (controller1.read() & 0x01);
         } else if (addr == 0x4017) {
-            val = controller2.read() & 0xFF;
+            val = (openBus & 0xE0) | (controller2.read() & 0x01);
         } else if (addr >= 0x4020) {
             val = cartridge.cpuRead(addr);
             if (val < 0) val = openBus;
