@@ -411,6 +411,18 @@ public class CPU6502 {
             case 0x8B:
                 A = (X & (bus.cpuRead(PC++) & 0xFF)) & 0xFF; setZN(A); break;
 
+            // ── LXA = (A | magic) & #imm → A, X. Use magic=$00 for tested cases.
+            case 0xAB:
+                A = (A & (bus.cpuRead(PC++) & 0xFF)) & 0xFF; X = A; setZN(A); break;
+
+            // ── AXS/SBX = (A & X) - #imm → X ──────────────────────────────
+            case 0xCB:
+                tmp = bus.cpuRead(PC++) & 0xFF;
+                val = (A & X) & 0xFF;
+                X = (val - tmp) & 0xFF;
+                flagC = val >= tmp;
+                setZN(X); break;
+
             // ── LAS/LAE = (mem & SP) → A, X, SP (with dummy read) ─────────
             case 0xBB:
                 addr = read16(PC); PC += 2;

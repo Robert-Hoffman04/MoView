@@ -78,7 +78,7 @@ public abstract class Mapper {
      * Default CHR write (for CHR-RAM). Uses safe modulo.
      */
     public void ppuWrite(int addr, int val) {
-        chr[addr % chr.length] = (byte) val;
+        if (chrBanks == 0) chr[addr % chr.length] = (byte) val;
     }
 
     public int getMirrorMode() { return mirrorMode; }
