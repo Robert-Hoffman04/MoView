@@ -47,13 +47,15 @@ public class Bus {
     public int cpuRead(int addr) {
         addr &= 0xFFFF;
         int val;
+        boolean updateOpenBus = true;
 
         if (addr < 0x2000) {
             val = ram[addr & 0x07FF] & 0xFF;
         } else if (addr < 0x4000) {
             val = ppu.readRegister(addr & 0x07);
         } else if (addr == 0x4015) {
-            val = apu.readStatus() & 0xFF;
+            val = (apu.readStatus() & 0xDF) | (openBus & 0x20);
+            updateOpenBus = false;
         } else if (addr == 0x4016) {
             val = (openBus & 0xE0) | (controller1.read() & 0x01);
         } else if (addr == 0x4017) {
@@ -66,7 +68,7 @@ public class Bus {
             val = openBus;
         }
 
-        openBus = val & 0xFF;
+        if (updateOpenBus) openBus = val & 0xFF;
         return val;
     }
 
