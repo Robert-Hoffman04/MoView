@@ -411,35 +411,35 @@ public class CPU6502 {
             case 0x8B:
                 A = (X & (bus.cpuRead(PC++) & 0xFF)) & 0xFF; setZN(A); break;
 
-            // ── LAS = SP & mem → A, X, SP (with dummy read) ───────────────
+            // ── LAS/LAE = (mem & SP) → A, X, SP (with dummy read) ─────────
             case 0xBB:
                 addr = read16(PC); PC += 2;
-                val = bus.cpuRead(readAbsIndexed(addr, Y));
+                val = bus.cpuRead(readAbsIndexed(addr, Y)) & SP;
                 A = val; X = val; SP = val; setZN(val); break;
 
-            // ── TAS = SP = A & X, store A & X & (addr_hi+1) ───────────────
+            // ── TAS/SHS = SP = A & X, store SP & (addr_hi+1) ──────────────
             case 0x9B:
                 addr = read16(PC); PC += 2;
                 SP = A & X;
-                bus.cpuWrite((addr + Y) & 0xFFFF, SP & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, Y, SP, SP); break;
 
-            // ── SHA = store A & X & (addr_hi+1) abs,Y / (ind),Y ───────────
+            // ── SHA/AHX = store A & X & (addr_hi+1) abs,Y / (ind),Y ───────
             case 0x9F:
                 addr = read16(PC); PC += 2;
-                bus.cpuWrite((addr + Y) & 0xFFFF, A & X & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, Y, A & X, A & X); break;
             case 0x93:
-                tmp = bus.cpuRead(PC++) & 0xFF; addr = read16Bug(tmp);
-                bus.cpuWrite((addr + Y) & 0xFFFF, A & X & (((addr >> 8) + 1) & 0xFF)); break;
+                tmp = bus.cpuRead(PC++) & 0xFF;
+                writeUnstableIndY(tmp, A & X, A & X); break;
 
             // ── SHX = store X & (addr_hi+1) abs,Y ─────────────────────────
             case 0x9E:
                 addr = read16(PC); PC += 2;
-                bus.cpuWrite((addr + Y) & 0xFFFF, X & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, Y, X, X); break;
 
             // ── SHY = store Y & (addr_hi+1) abs,X ─────────────────────────
             case 0x9C:
                 addr = read16(PC); PC += 2;
-                bus.cpuWrite((addr + X) & 0xFFFF, Y & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, X, Y, Y); break;
 
             default: break; // remaining undocumented opcodes treated as NOP
         }
@@ -521,6 +521,35 @@ public class CPU6502 {
         int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + Y) & 0xFF);
         bus.cpuRead(dummyAddr);
         bus.cpuWrite((baseAddr + Y) & 0xFFFF, val);
+    }
+
+
+    /**
+     * Unstable SHx/TAS absolute-indexed stores corrupt the target page on carry.
+     * Without page crossing they write to the normal effective address. When the
+     * low-byte addition carries, the effective high byte is ANDed with the same
+     * register combination that is being stored (X, Y, or A&X).
+     */
+    private void writeUnstableAbsIndexed(int baseAddr, int index, int val, int highMask) {
+        int effective = (baseAddr + index) & 0xFFFF;
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        int target = pageCross(baseAddr, effective)
+                ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
+                : effective;
+        bus.cpuWrite(target, val & (((baseAddr >> 8) + 1) & 0xFF));
+    }
+
+    /** Same unstable target-page behavior as SHA absolute,Y, using an indirect base. */
+    private void writeUnstableIndY(int pointerAddr, int val, int highMask) {
+        int baseAddr = read16Bug(pointerAddr & 0xFF);
+        int effective = (baseAddr + Y) & 0xFFFF;
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + Y) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        int target = pageCross(baseAddr, effective)
+                ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
+                : effective;
+        bus.cpuWrite(target, val & (((baseAddr >> 8) + 1) & 0xFF));
     }
 
     // ── RMW helpers with dummy write (write original value before modifying) ──
