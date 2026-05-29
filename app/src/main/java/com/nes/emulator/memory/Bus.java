@@ -22,6 +22,7 @@ public class Bus {
     private int openBus = 0;
 
     private int dmaStallCycles = 0;
+    private boolean dmcDmaReadSinceCpu = false;
 
     public Bus(Cartridge cartridge, APU apu, Controller ctrl1, Controller ctrl2) {
         this.cartridge   = cartridge;
@@ -42,6 +43,18 @@ public class Bus {
 
     public int readPRG(int addr) {
         return cartridge.cpuRead(addr);
+    }
+
+    public int dmcRead(int addr) {
+        int val = cpuRead(addr);
+        dmcDmaReadSinceCpu = true;
+        return val;
+    }
+
+    public boolean consumeDmcDmaReadSinceCpu() {
+        boolean happened = dmcDmaReadSinceCpu;
+        dmcDmaReadSinceCpu = false;
+        return happened;
     }
 
     public int cpuRead(int addr) {

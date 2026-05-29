@@ -414,7 +414,7 @@ public class CPU6502 {
             // ── LAS/LAE = (mem & SP) → A, X, SP (with dummy read) ─────────
             case 0xBB:
                 addr = read16(PC); PC += 2;
-                val = bus.cpuRead(readAbsIndexed(addr, Y)) & SP;
+                val = bus.cpuRead(readUnstableAbsIndexed(addr, Y, SP)) & SP;
                 A = val; X = val; SP = val; setZN(val); break;
 
             // ── TAS/SHS = SP = A & X, store SP & (addr_hi+1) ──────────────
@@ -537,7 +537,12 @@ public class CPU6502 {
         int target = pageCross(baseAddr, effective)
                 ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
                 : effective;
-        bus.cpuWrite(target, val & (((baseAddr >> 8) + 1) & 0xFF));
+        bus.cpuWrite(target, unstableStoreValue(baseAddr, val));
+    }
+
+    private int unstableStoreValue(int baseAddr, int val) {
+        if (bus.consumeDmcDmaReadSinceCpu()) return val & 0xFF;
+        return val & (((baseAddr >> 8) + 1) & 0xFF);
     }
 
     /** Same unstable target-page behavior as SHA absolute,Y, using an indirect base. */
@@ -549,7 +554,17 @@ public class CPU6502 {
         int target = pageCross(baseAddr, effective)
                 ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
                 : effective;
-        bus.cpuWrite(target, val & (((baseAddr >> 8) + 1) & 0xFF));
+        bus.cpuWrite(target, unstableStoreValue(baseAddr, val));
+    }
+
+    /** LAS/LAE uses the same unstable high-byte read target on page crossings. */
+    private int readUnstableAbsIndexed(int baseAddr, int index, int highMask) {
+        int effective = (baseAddr + index) & 0xFFFF;
+        if (!pageCross(baseAddr, effective)) return effective;
+        extraCycles++;
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        return (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8);
     }
 
     // ── RMW helpers with dummy write (write original value before modifying) ──

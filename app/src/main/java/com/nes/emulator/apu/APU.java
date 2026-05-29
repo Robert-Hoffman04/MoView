@@ -739,7 +739,7 @@ public class APU {
 
             // Fetch next sample byte into buffer if buffer is empty and we have bytes
             if (sampleBufferEmpty && bytesRemaining > 0 && bus != null) {
-                sampleBuffer      = bus.cpuRead(currentAddr) & 0xFF;
+                sampleBuffer      = bus.dmcRead(currentAddr) & 0xFF;
                 sampleBufferEmpty = false;
                 currentAddr       = 0xC000 | ((currentAddr + 1) & 0x3FFF);
                 bytesRemaining--;
