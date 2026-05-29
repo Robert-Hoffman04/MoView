@@ -59,12 +59,14 @@ public class Bus {
         } else if (addr == 0x4017) {
             val = controller2.read() & 0xFF;
         } else if (addr >= 0x4020) {
-            val = cartridge.cpuRead(addr) & 0xFF;
+            val = cartridge.cpuRead(addr);
+            if (val < 0) val = openBus;
+            else val &= 0xFF;
         } else {
             val = openBus;
         }
 
-        openBus = val;
+        openBus = val & 0xFF;
         return val;
     }
 

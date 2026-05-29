@@ -9,7 +9,7 @@ import com.nes.emulator.memory.Bus;
  *  - BRK (0x00) fully implemented: pushes PC+1, status with B=1, sets I, vectors via $FFFE
  *  - BCD (decimal mode) DISABLED – NES CPU (2A03) ignores the D flag, so ADC/SBC always binary.
  *  - IRQ pending flag always latched; IRQ taken only when I=0.
- *  - Dummy reads on page crossings for indexed instructions.
+ *  - Dummy reads on page crossings for indexed reads and on every indexed store.
  *  - Dummy writes for read-modify-write instructions (ASL, LSR, ROL, ROR, INC, DEC).
  *  - Open bus behavior: writes and reads update the open bus value.
  *  - NOP $0C (Absolute) performs a dummy read of the operand address.
@@ -276,23 +276,23 @@ public class CPU6502 {
             case 0xE1: tmp = (bus.cpuRead(PC++) + X) & 0xFF; sbc(bus.cpuRead(read16Bug(tmp)) & 0xFF); break;
             case 0xF1: tmp = bus.cpuRead(PC++) & 0xFF; sbc(bus.cpuRead(readIndY(tmp))); break;
 
-            // ── STA (no dummy reads) ──────────────────────────────────────
+            // ── STA (indexed store forms perform dummy reads) ─────────────
             case 0x85: bus.cpuWrite(bus.cpuRead(PC++) & 0xFF, A); break;
-            case 0x95: bus.cpuWrite((bus.cpuRead(PC++) + X) & 0xFF, A); break;
+            case 0x95: writeZpIndexed(bus.cpuRead(PC++) & 0xFF, X, A); break;
             case 0x8D: addr = read16(PC); PC += 2; bus.cpuWrite(addr, A); break;
-            case 0x9D: addr = read16(PC); PC += 2; bus.cpuWrite((addr + X) & 0xFFFF, A); break;
-            case 0x99: addr = read16(PC); PC += 2; bus.cpuWrite((addr + Y) & 0xFFFF, A); break;
+            case 0x9D: addr = read16(PC); PC += 2; writeAbsIndexed(addr, X, A); break;
+            case 0x99: addr = read16(PC); PC += 2; writeAbsIndexed(addr, Y, A); break;
             case 0x81: tmp = (bus.cpuRead(PC++) + X) & 0xFF; bus.cpuWrite(read16Bug(tmp), A); break;
-            case 0x91: tmp = bus.cpuRead(PC++) & 0xFF; bus.cpuWrite((read16Bug(tmp) + Y) & 0xFFFF, A); break;
+            case 0x91: tmp = bus.cpuRead(PC++) & 0xFF; writeIndY(tmp, A); break;
 
             // ── STX ───────────────────────────────────────────────────────
             case 0x86: bus.cpuWrite(bus.cpuRead(PC++) & 0xFF, X); break;
-            case 0x96: bus.cpuWrite((bus.cpuRead(PC++) + Y) & 0xFF, X); break;
+            case 0x96: writeZpIndexed(bus.cpuRead(PC++) & 0xFF, Y, X); break;
             case 0x8E: addr = read16(PC); PC += 2; bus.cpuWrite(addr, X); break;
 
             // ── STY ───────────────────────────────────────────────────────
             case 0x84: bus.cpuWrite(bus.cpuRead(PC++) & 0xFF, Y); break;
-            case 0x94: bus.cpuWrite((bus.cpuRead(PC++) + X) & 0xFF, Y); break;
+            case 0x94: writeZpIndexed(bus.cpuRead(PC++) & 0xFF, X, Y); break;
             case 0x8C: addr = read16(PC); PC += 2; bus.cpuWrite(addr, Y); break;
 
             // ── Flag ops ──────────────────────────────────────────────────
@@ -498,6 +498,29 @@ public class CPU6502 {
             bus.cpuRead(dummyAddr);
         }
         return effective;
+    }
+
+
+    /** Zero-page indexed writes read the unindexed zero-page address before writing. */
+    private void writeZpIndexed(int baseAddr, int index, int val) {
+        baseAddr &= 0xFF;
+        bus.cpuRead(baseAddr);
+        bus.cpuWrite((baseAddr + index) & 0xFF, val);
+    }
+
+    /** Absolute indexed writes always perform the 6502 dummy read before writing. */
+    private void writeAbsIndexed(int baseAddr, int index, int val) {
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        bus.cpuWrite((baseAddr + index) & 0xFFFF, val);
+    }
+
+    /** (Indirect),Y writes always perform the pre-carry dummy read before writing. */
+    private void writeIndY(int pointerAddr, int val) {
+        int baseAddr = read16Bug(pointerAddr & 0xFF);
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + Y) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        bus.cpuWrite((baseAddr + Y) & 0xFFFF, val);
     }
 
     // ── RMW helpers with dummy write (write original value before modifying) ──
