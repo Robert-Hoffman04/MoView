@@ -525,23 +525,24 @@ public class CPU6502 {
 
 
     /**
-     * Unstable SHx/TAS absolute-indexed stores corrupt the target page on carry.
-     * Without page crossing they write to the normal effective address. When the
-     * low-byte addition carries, the effective high byte is ANDed with the same
-     * register combination that is being stored (X, Y, or A&X).
+     * Unstable SHx/TAS absolute-indexed stores corrupt H on normal page-crossing
+     * writes. If RDY/DMC halts on the dummy-read cycle before the write, hardware
+     * falls back to standard-store behavior: the normal effective address is used
+     * and the value is not ANDed with H.
      */
     private void writeUnstableAbsIndexed(int baseAddr, int index, int val, int highMask) {
         int effective = (baseAddr + index) & 0xFFFF;
         int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
         bus.cpuRead(dummyAddr);
-        int target = pageCross(baseAddr, effective)
+        boolean rdyHalted = bus.consumeDmcDmaReadSinceCpu();
+        int target = (!rdyHalted && pageCross(baseAddr, effective))
                 ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
                 : effective;
-        bus.cpuWrite(target, unstableStoreValue(baseAddr, val));
+        bus.cpuWrite(target, unstableStoreValue(baseAddr, val, rdyHalted));
     }
 
-    private int unstableStoreValue(int baseAddr, int val) {
-        if (bus.consumeDmcDmaReadSinceCpu()) return val & 0xFF;
+    private int unstableStoreValue(int baseAddr, int val, boolean rdyHalted) {
+        if (rdyHalted) return val & 0xFF;
         return val & (((baseAddr >> 8) + 1) & 0xFF);
     }
 
@@ -551,10 +552,11 @@ public class CPU6502 {
         int effective = (baseAddr + Y) & 0xFFFF;
         int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + Y) & 0xFF);
         bus.cpuRead(dummyAddr);
-        int target = pageCross(baseAddr, effective)
+        boolean rdyHalted = bus.consumeDmcDmaReadSinceCpu();
+        int target = (!rdyHalted && pageCross(baseAddr, effective))
                 ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
                 : effective;
-        bus.cpuWrite(target, unstableStoreValue(baseAddr, val));
+        bus.cpuWrite(target, unstableStoreValue(baseAddr, val, rdyHalted));
     }
 
     /** LAS/LAE uses the same unstable high-byte read target on page crossings. */
