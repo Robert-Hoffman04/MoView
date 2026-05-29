@@ -51,6 +51,10 @@ public class Bus {
         return val;
     }
 
+    public void noteDmcDmaReadSinceCpu() {
+        dmcDmaReadSinceCpu = true;
+    }
+
     public boolean consumeDmcDmaReadSinceCpu() {
         boolean happened = dmcDmaReadSinceCpu;
         dmcDmaReadSinceCpu = false;

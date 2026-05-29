@@ -192,7 +192,11 @@ public class APU {
                 pulse2.setEnabled((val & 0x02) != 0);
                 triangle.setEnabled((val & 0x04) != 0);
                 noise.setEnabled((val & 0x08) != 0);
+                boolean dmcWasIdle = dmc.bytesRemaining == 0;
                 dmc.setEnabled((val & 0x10) != 0);
+                if ((val & 0x10) != 0 && dmcWasIdle && bus != null) {
+                    bus.noteDmcDmaReadSinceCpu();
+                }
                 // Writing $4015 clears the DMC IRQ flag
                 dmc.clearIrq();
                 break;
