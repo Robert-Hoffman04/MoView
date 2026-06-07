@@ -192,7 +192,11 @@ public class APU {
                 pulse2.setEnabled((val & 0x02) != 0);
                 triangle.setEnabled((val & 0x04) != 0);
                 noise.setEnabled((val & 0x08) != 0);
+                boolean dmcWasIdle = dmc.bytesRemaining == 0;
                 dmc.setEnabled((val & 0x10) != 0);
+                if ((val & 0x10) != 0 && dmcWasIdle && bus != null) {
+                    bus.noteDmcDmaReadSinceCpu();
+                }
                 // Writing $4015 clears the DMC IRQ flag
                 dmc.clearIrq();
                 break;
@@ -739,7 +743,7 @@ public class APU {
 
             // Fetch next sample byte into buffer if buffer is empty and we have bytes
             if (sampleBufferEmpty && bytesRemaining > 0 && bus != null) {
-                sampleBuffer      = bus.cpuRead(currentAddr) & 0xFF;
+                sampleBuffer      = bus.dmcRead(currentAddr) & 0xFF;
                 sampleBufferEmpty = false;
                 currentAddr       = 0xC000 | ((currentAddr + 1) & 0x3FFF);
                 bytesRemaining--;

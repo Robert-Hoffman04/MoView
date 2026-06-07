@@ -27,6 +27,9 @@ public class NES {
         apu = new APU();
         bus = new Bus(cartridge, apu, ctrl1, ctrl2);
         cpu = new CPU6502(bus);
+        apu.setBus(bus);
+        apu.setIrqCallback(cpu::triggerIRQ);
+        cartridge.setIrqCallback(cpu::triggerIRQ);
         ppu = new PPU(bus, cpu::triggerNMI);
         bus.setPPU(ppu);
     }

@@ -22,6 +22,7 @@ public class Bus {
     private int openBus = 0;
 
     private int dmaStallCycles = 0;
+    private boolean dmcDmaReadSinceCpu = false;
 
     public Bus(Cartridge cartridge, APU apu, Controller ctrl1, Controller ctrl2) {
         this.cartridge   = cartridge;
@@ -44,27 +45,47 @@ public class Bus {
         return cartridge.cpuRead(addr);
     }
 
+    public int dmcRead(int addr) {
+        int val = cpuRead(addr);
+        dmcDmaReadSinceCpu = true;
+        return val;
+    }
+
+    public void noteDmcDmaReadSinceCpu() {
+        dmcDmaReadSinceCpu = true;
+    }
+
+    public boolean consumeDmcDmaReadSinceCpu() {
+        boolean happened = dmcDmaReadSinceCpu;
+        dmcDmaReadSinceCpu = false;
+        return happened;
+    }
+
     public int cpuRead(int addr) {
         addr &= 0xFFFF;
         int val;
+        boolean updateOpenBus = true;
 
         if (addr < 0x2000) {
             val = ram[addr & 0x07FF] & 0xFF;
         } else if (addr < 0x4000) {
             val = ppu.readRegister(addr & 0x07);
         } else if (addr == 0x4015) {
-            val = apu.readStatus() & 0xFF;
+            val = (apu.readStatus() & 0xDF) | (openBus & 0x20);
+            updateOpenBus = false;
         } else if (addr == 0x4016) {
-            val = controller1.read() & 0xFF;
+            val = (openBus & 0xE0) | (controller1.read() & 0x01);
         } else if (addr == 0x4017) {
-            val = controller2.read() & 0xFF;
+            val = (openBus & 0xE0) | (controller2.read() & 0x01);
         } else if (addr >= 0x4020) {
-            val = cartridge.cpuRead(addr) & 0xFF;
+            val = cartridge.cpuRead(addr);
+            if (val < 0) val = openBus;
+            else val &= 0xFF;
         } else {
             val = openBus;
         }
 
-        openBus = val;
+        if (updateOpenBus) openBus = val & 0xFF;
         return val;
     }
 

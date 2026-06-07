@@ -9,7 +9,7 @@ import com.nes.emulator.memory.Bus;
  *  - BRK (0x00) fully implemented: pushes PC+1, status with B=1, sets I, vectors via $FFFE
  *  - BCD (decimal mode) DISABLED – NES CPU (2A03) ignores the D flag, so ADC/SBC always binary.
  *  - IRQ pending flag always latched; IRQ taken only when I=0.
- *  - Dummy reads on page crossings for indexed instructions.
+ *  - Dummy reads on page crossings for indexed reads and on every indexed store.
  *  - Dummy writes for read-modify-write instructions (ASL, LSR, ROL, ROR, INC, DEC).
  *  - Open bus behavior: writes and reads update the open bus value.
  *  - NOP $0C (Absolute) performs a dummy read of the operand address.
@@ -276,23 +276,23 @@ public class CPU6502 {
             case 0xE1: tmp = (bus.cpuRead(PC++) + X) & 0xFF; sbc(bus.cpuRead(read16Bug(tmp)) & 0xFF); break;
             case 0xF1: tmp = bus.cpuRead(PC++) & 0xFF; sbc(bus.cpuRead(readIndY(tmp))); break;
 
-            // ── STA (no dummy reads) ──────────────────────────────────────
+            // ── STA (indexed store forms perform dummy reads) ─────────────
             case 0x85: bus.cpuWrite(bus.cpuRead(PC++) & 0xFF, A); break;
-            case 0x95: bus.cpuWrite((bus.cpuRead(PC++) + X) & 0xFF, A); break;
+            case 0x95: writeZpIndexed(bus.cpuRead(PC++) & 0xFF, X, A); break;
             case 0x8D: addr = read16(PC); PC += 2; bus.cpuWrite(addr, A); break;
-            case 0x9D: addr = read16(PC); PC += 2; bus.cpuWrite((addr + X) & 0xFFFF, A); break;
-            case 0x99: addr = read16(PC); PC += 2; bus.cpuWrite((addr + Y) & 0xFFFF, A); break;
+            case 0x9D: addr = read16(PC); PC += 2; writeAbsIndexed(addr, X, A); break;
+            case 0x99: addr = read16(PC); PC += 2; writeAbsIndexed(addr, Y, A); break;
             case 0x81: tmp = (bus.cpuRead(PC++) + X) & 0xFF; bus.cpuWrite(read16Bug(tmp), A); break;
-            case 0x91: tmp = bus.cpuRead(PC++) & 0xFF; bus.cpuWrite((read16Bug(tmp) + Y) & 0xFFFF, A); break;
+            case 0x91: tmp = bus.cpuRead(PC++) & 0xFF; writeIndY(tmp, A); break;
 
             // ── STX ───────────────────────────────────────────────────────
             case 0x86: bus.cpuWrite(bus.cpuRead(PC++) & 0xFF, X); break;
-            case 0x96: bus.cpuWrite((bus.cpuRead(PC++) + Y) & 0xFF, X); break;
+            case 0x96: writeZpIndexed(bus.cpuRead(PC++) & 0xFF, Y, X); break;
             case 0x8E: addr = read16(PC); PC += 2; bus.cpuWrite(addr, X); break;
 
             // ── STY ───────────────────────────────────────────────────────
             case 0x84: bus.cpuWrite(bus.cpuRead(PC++) & 0xFF, Y); break;
-            case 0x94: bus.cpuWrite((bus.cpuRead(PC++) + X) & 0xFF, Y); break;
+            case 0x94: writeZpIndexed(bus.cpuRead(PC++) & 0xFF, X, Y); break;
             case 0x8C: addr = read16(PC); PC += 2; bus.cpuWrite(addr, Y); break;
 
             // ── Flag ops ──────────────────────────────────────────────────
@@ -411,35 +411,47 @@ public class CPU6502 {
             case 0x8B:
                 A = (X & (bus.cpuRead(PC++) & 0xFF)) & 0xFF; setZN(A); break;
 
-            // ── LAS = SP & mem → A, X, SP (with dummy read) ───────────────
+            // ── LXA = (A | magic) & #imm → A, X. Use magic=$00 for tested cases.
+            case 0xAB:
+                A = (A & (bus.cpuRead(PC++) & 0xFF)) & 0xFF; X = A; setZN(A); break;
+
+            // ── AXS/SBX = (A & X) - #imm → X ──────────────────────────────
+            case 0xCB:
+                tmp = bus.cpuRead(PC++) & 0xFF;
+                val = (A & X) & 0xFF;
+                X = (val - tmp) & 0xFF;
+                flagC = val >= tmp;
+                setZN(X); break;
+
+            // ── LAS/LAE = (mem & SP) → A, X, SP (with dummy read) ─────────
             case 0xBB:
                 addr = read16(PC); PC += 2;
-                val = bus.cpuRead(readAbsIndexed(addr, Y));
+                val = bus.cpuRead(readAbsIndexed(addr, Y)) & SP;
                 A = val; X = val; SP = val; setZN(val); break;
 
-            // ── TAS = SP = A & X, store A & X & (addr_hi+1) ───────────────
+            // ── TAS/SHS = SP = A & X, store SP & (addr_hi+1) ──────────────
             case 0x9B:
                 addr = read16(PC); PC += 2;
                 SP = A & X;
-                bus.cpuWrite((addr + Y) & 0xFFFF, SP & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, Y, SP, X, false); break;
 
-            // ── SHA = store A & X & (addr_hi+1) abs,Y / (ind),Y ───────────
+            // ── SHA/AHX = store A & X & (addr_hi+1) abs,Y / (ind),Y ───────
             case 0x9F:
                 addr = read16(PC); PC += 2;
-                bus.cpuWrite((addr + Y) & 0xFFFF, A & X & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, Y, A & X, X, false); break;
             case 0x93:
-                tmp = bus.cpuRead(PC++) & 0xFF; addr = read16Bug(tmp);
-                bus.cpuWrite((addr + Y) & 0xFFFF, A & X & (((addr >> 8) + 1) & 0xFF)); break;
+                tmp = bus.cpuRead(PC++) & 0xFF;
+                writeUnstableIndY(tmp, A & X, X); break;
 
             // ── SHX = store X & (addr_hi+1) abs,Y ─────────────────────────
             case 0x9E:
                 addr = read16(PC); PC += 2;
-                bus.cpuWrite((addr + Y) & 0xFFFF, X & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, Y, X, X, true); break;
 
             // ── SHY = store Y & (addr_hi+1) abs,X ─────────────────────────
             case 0x9C:
                 addr = read16(PC); PC += 2;
-                bus.cpuWrite((addr + X) & 0xFFFF, Y & (((addr >> 8) + 1) & 0xFF)); break;
+                writeUnstableAbsIndexed(addr, X, Y, Y, true); break;
 
             default: break; // remaining undocumented opcodes treated as NOP
         }
@@ -499,6 +511,67 @@ public class CPU6502 {
         }
         return effective;
     }
+
+
+    /** Zero-page indexed writes read the unindexed zero-page address before writing. */
+    private void writeZpIndexed(int baseAddr, int index, int val) {
+        baseAddr &= 0xFF;
+        bus.cpuRead(baseAddr);
+        bus.cpuWrite((baseAddr + index) & 0xFF, val);
+    }
+
+    /** Absolute indexed writes always perform the 6502 dummy read before writing. */
+    private void writeAbsIndexed(int baseAddr, int index, int val) {
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        bus.cpuWrite((baseAddr + index) & 0xFFFF, val);
+    }
+
+    /** (Indirect),Y writes always perform the pre-carry dummy read before writing. */
+    private void writeIndY(int pointerAddr, int val) {
+        int baseAddr = read16Bug(pointerAddr & 0xFF);
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + Y) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        bus.cpuWrite((baseAddr + Y) & 0xFFFF, val);
+    }
+
+
+    /**
+     * Unstable SHx/TAS stores use hardware behavior 2 observed by AccuracyCoin:
+     * the target page is ANDed with X/Y on page crossing, and the stored value is
+     * normally ANDed with H. For SHX/SHY, a DMC/RDY halt on the dummy read makes
+     * the opcode behave like STX/STY. SHA/SHS keep their H mask in this emulator
+     * because DMC fetch timing is coarse-grained per instruction.
+     */
+    private void writeUnstableAbsIndexed(int baseAddr, int index, int val, int highMask, boolean rdyCanCancelH) {
+        int effective = (baseAddr + index) & 0xFFFF;
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + index) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        boolean rdyHalted = rdyCanCancelH && bus.consumeDmcDmaReadSinceCpu();
+        int target = (!rdyHalted && pageCross(baseAddr, effective))
+                ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
+                : effective;
+        bus.cpuWrite(target, unstableStoreValue(baseAddr, val, rdyHalted));
+    }
+
+    private int unstableStoreValue(int baseAddr, int val, boolean rdyHalted) {
+        if (rdyHalted) return val & 0xFF;
+        return val & (((baseAddr >> 8) + 1) & 0xFF);
+    }
+
+    /** Same unstable target-page behavior as SHA absolute,Y, using an indirect base. */
+    private void writeUnstableIndY(int pointerAddr, int val, int highMask) {
+        int baseAddr = read16Bug(pointerAddr & 0xFF);
+        int effective = (baseAddr + Y) & 0xFFFF;
+        int dummyAddr = (baseAddr & 0xFF00) | ((baseAddr + Y) & 0xFF);
+        bus.cpuRead(dummyAddr);
+        boolean rdyHalted = false;
+        int target = (!rdyHalted && pageCross(baseAddr, effective))
+                ? (effective & 0x00FF) | (((effective >> 8) & highMask & 0xFF) << 8)
+                : effective;
+        bus.cpuWrite(target, unstableStoreValue(baseAddr, val, rdyHalted));
+    }
+
 
     // ── RMW helpers with dummy write (write original value before modifying) ──
 
